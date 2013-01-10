@@ -6,16 +6,16 @@ import android.content.ContentUris;
 import android.net.Uri;
 import android.provider.CalendarContract.Events;
 
+/**
+ * Utility class for various calendar ops
+ * 
+ * @author MrUseL3tter
+ */
 public class CalendarUtils {
 
     @TargetApi(14)
-    public static void deleteEvent(ContentResolver contentResolver, String title) {
-
+    public static int deleteEvent(ContentResolver contentResolver, String title) {
 	Uri deleteUri = ContentUris.withAppendedId(Events.CONTENT_URI, Long.parseLong(title));
-
-	System.out.println("DELETING EVENT #" + title);
-	int i = contentResolver.delete(deleteUri, null, null);
-	//	int i = contentResolver.delete(Events.CONTENT_URI, Events._ID + " =? ", new String[] { DatabaseUtils.sqlEscapeString(title) });
-	System.out.println("DELETED ROWS: " + i);
+	return contentResolver.delete(deleteUri, null, null);
     }
 }

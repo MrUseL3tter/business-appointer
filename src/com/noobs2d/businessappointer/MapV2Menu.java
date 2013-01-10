@@ -8,13 +8,17 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+/**
+ * Map menu using the new version of android gmaps.
+ * 
+ * @author MrUseL3tter
+ */
 public class MapV2Menu extends FragmentActivity {
-
-    private static final int SET_DESTINATION_PROMPT = 1;
 
     /**
      * Note that this may be null if the Google Play services APK is not available.
@@ -34,14 +38,14 @@ public class MapV2Menu extends FragmentActivity {
 	mMap.setMyLocationEnabled(true);
 	mMap.setTrafficEnabled(true);
 	mMap.getUiSettings().setCompassEnabled(true);
-	//	mMap.setOnMapLongClickListener(new OnMapLongClickListener() {
-	//
-	//	    @Override
-	//	    public void onMapLongClick(LatLng point) {
-	//		MapV2Menu.this.point = point;
-	//		showDialog(SET_DESTINATION_PROMPT);
-	//	    }
-	//	});
+	mMap.setOnMapLongClickListener(new OnMapLongClickListener() {
+
+	    @Override
+	    public void onMapLongClick(LatLng point) {
+		MapV2Menu.this.point = point;
+		showDialog(Dialogs.SET_DESTINATION_PROMPT);
+	    }
+	});
     }
 
     /**
@@ -82,7 +86,7 @@ public class MapV2Menu extends FragmentActivity {
 	Builder builder = new AlertDialog.Builder(this);
 	String message = "";
 	switch (id) {
-	    case SET_DESTINATION_PROMPT:
+	    case Dialogs.SET_DESTINATION_PROMPT:
 		message = "Set this point (" + point.latitude + ", " + point.longitude + ") as the destination?";
 		break;
 	    default:

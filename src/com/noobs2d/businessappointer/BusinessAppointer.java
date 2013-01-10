@@ -6,6 +6,11 @@ import android.os.Bundle;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
 
+/**
+ * Main activity with Tab menus.
+ * 
+ * @author MrUseL3tter
+ */
 @SuppressWarnings("deprecation")
 public class BusinessAppointer extends TabActivity {
 

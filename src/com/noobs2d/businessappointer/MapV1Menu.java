@@ -23,7 +23,6 @@ import android.provider.CalendarContract;
 import android.provider.CalendarContract.Events;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 
 import com.google.android.maps.GeoPoint;
@@ -37,16 +36,15 @@ import com.noobs2d.businessappointer.routing.Route;
 import com.noobs2d.businessappointer.routing.RouteOverlay;
 import com.noobs2d.businessappointer.routing.RouteOverlayCallback;
 
+/**
+ * Map menu using the first version of android google maps.
+ * 
+ * @author MrUseL3tter
+ */
 public class MapV1Menu extends MapActivity implements LocationListener, RouteOverlayCallback {
 
-    private static final int BEGIN_PROMPT = 1;
-    private static final int MARK_LOCATION_PROMPT = 2;
-    private static final int SET_LOCATION_ERROR_PROMPT = 3;
-    private static final int ADD_CONTACTS_PROMPT = 4;
-    private static final int SHOW_SEARCH_RESULTS = 5;
-
     @SuppressLint("NewApi")
-    private class DownloadWebDataTask extends AsyncTask<String, Void, Route> {
+    public class GMapAsyncTask extends AsyncTask<String, Void, Route> {
 
 	@Override
 	protected Route doInBackground(String... data) {
@@ -66,7 +64,7 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 	}
     }
 
-    private class SearchMapsTask extends AsyncTask<String, Void, List<Address>> {
+    public class GMapSearchTask extends AsyncTask<String, Void, List<Address>> {
 
 	private ProgressDialog progressDialog;
 
@@ -82,7 +80,6 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 	@Override
 	protected void onPostExecute(List<Address> result) {
 	    progressDialog.dismiss();
-	    //	    searchView.clearFocus();
 	    if (result.size() > 0)
 		mapView.getController().setCenter(new GeoPoint((int) (result.get(0).getLatitude() * 1E6), (int) (result.get(0).getLongitude() * 1E6)));
 	    super.onPostExecute(result);
@@ -96,10 +93,8 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 
     }
 
-    private ArrayAdapter<String> addressAdapter;
     private MapView mapView;
     private MyLocationOverlay currentLocationOverlay;
-    //    private SearchView searchView;
     private Button next;
     private boolean isPotentialLongPress;
     private int markX;
@@ -157,57 +152,37 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 	mapView.getOverlays().add(currentLocationOverlay);
 	mapView.invalidate();
 
-	//	searchView = (SearchView) findViewById(R.id.search);
-	//	searchView.setOnQueryTextListener(new OnQueryTextListener() {
-	//
-	//	    @Override
-	//	    public boolean onQueryTextChange(String newText) {
-	//		// TODO Auto-generated method stub
-	//		return false;
-	//	    }
-	//
-	//	    @Override
-	//	    public boolean onQueryTextSubmit(String query) {
-	//		new SearchMapsTask().execute(query);
-	//		return false;
-	//	    }
-	//	});
-
 	next = (Button) findViewById(R.id.nextButton);
 	next.setEnabled(false);
 	next.setOnClickListener(new View.OnClickListener() {
 
 	    @Override
 	    public void onClick(View v) {
-		showDialog(ADD_CONTACTS_PROMPT);
+		showDialog(Dialogs.ADD_CONTACTS_PROMPT);
 	    }
 	});
-	showDialog(BEGIN_PROMPT);
+	showDialog(Dialogs.BEGIN_PROMPT);
     }
 
     @Override
     public void onLocationChanged(Location location) {
-	// TODO Auto-generated method stub
     }
 
     @Override
     public void onOverlayError() {
-	showDialog(SET_LOCATION_ERROR_PROMPT);
+	showDialog(Dialogs.SET_LOCATION_ERROR_PROMPT);
     }
 
     @Override
     public void onProviderDisabled(String provider) {
-	// TODO Auto-generated method stub
     }
 
     @Override
     public void onProviderEnabled(String provider) {
-	// TODO Auto-generated method stub
     }
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
-	// TODO Auto-generated method stub
     }
 
     private Route directions(final GeoPoint start, final GeoPoint dest) {
@@ -274,7 +249,7 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 	data[1] = "" + originLon; // start LONGITUDE
 	data[2] = "" + targetLat;
 	data[3] = "" + targetLon;
-	new DownloadWebDataTask().execute(data);
+	new GMapAsyncTask().execute(data);
     }
 
     private void showDialogOnUiThread() {
@@ -282,7 +257,7 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 
 	    @Override
 	    public void run() {
-		showDialog(MARK_LOCATION_PROMPT);
+		showDialog(Dialogs.MARK_LOCATION_PROMPT);
 	    }
 	});
     }
@@ -296,7 +271,7 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
     protected Dialog onCreateDialog(int id) {
 	Builder builder = new AlertDialog.Builder(this);
 	switch (id) {
-	    case BEGIN_PROMPT:
+	    case Dialogs.BEGIN_PROMPT:
 		builder.setMessage(R.string.mapv1_begin_prompt);
 		builder.setCancelable(false);
 		builder.setTitle("Reminder");
@@ -307,7 +282,7 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 		    }
 		});
 		break;
-	    case MARK_LOCATION_PROMPT:
+	    case Dialogs.MARK_LOCATION_PROMPT:
 		Projection p = mapView.getProjection();
 		final GeoPoint geoPoint = p.fromPixels(markX, markY);
 		final int targetLat = geoPoint.getLatitudeE6();
@@ -330,7 +305,7 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 		    }
 		});
 		break;
-	    case SET_LOCATION_ERROR_PROMPT:
+	    case Dialogs.SET_LOCATION_ERROR_PROMPT:
 		builder.setMessage(R.string.mapv1_set_location_error_prompt);
 		builder.setCancelable(false);
 		builder.setTitle("Error");
@@ -341,7 +316,7 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 		    }
 		});
 		break;
-	    case ADD_CONTACTS_PROMPT:
+	    case Dialogs.ADD_CONTACTS_PROMPT:
 		builder.setMessage(R.string.calendar_contact_prompt);
 		builder.setCancelable(true);
 		builder.setTitle("Add Contacts");
@@ -368,21 +343,7 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 		    }
 		});
 		break;
-	    case SHOW_SEARCH_RESULTS:
-		//		View view = getLayoutInflater().inflate(R.layout.list_layout, null);
-		//		ListView list = (ListView) view.findViewById(R.id.list);
-		//		if (list != null) {
-		//		    list.setAdapter(addressAdapter);
-		//		    builder.setView(view);
-		//		}
-		//		builder.setAdapter(addressAdapter, new Dialog.OnClickListener() {
-		//
-		//		    @Override
-		//		    public void onClick(DialogInterface dialog, int which) {
-		//			// TODO Auto-generated method stub.0
-		//
-		//		    }
-		//		});
+	    case Dialogs.SHOW_SEARCH_RESULTS:
 		break;
 	    default:
 		assert false;

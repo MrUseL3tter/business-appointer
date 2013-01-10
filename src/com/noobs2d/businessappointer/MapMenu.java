@@ -10,6 +10,11 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
 import com.noobs2d.businessappointer.routing.RouteOverlayCallback;
 
+/**
+ * Map tab menu.
+ * 
+ * @author MrUseL3tter
+ */
 public class MapMenu extends MapActivity implements LocationListener, RouteOverlayCallback {
 
     private MapView mapView;

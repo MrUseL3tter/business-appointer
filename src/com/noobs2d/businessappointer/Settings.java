@@ -9,13 +9,17 @@ import java.io.IOException;
 
 import android.os.Environment;
 
+/**
+ * Store house for license agreement.
+ * 
+ * @author MrUseL3tter
+ */
 public class Settings {
 
     public static boolean licenseAccepted = false;
 
     public static void load() {
-	if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-	    System.out.println("MOUNTED");
+	if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
 	    try {
 		File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + ".ba-settings");
 		BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -24,8 +28,6 @@ public class Settings {
 	    } catch (IOException e) {
 
 	    }
-	} else
-	    System.out.println("NOT MOUNTED");
     }
 
     public static void save() {

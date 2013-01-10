@@ -22,6 +22,11 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TimePicker;
 
+/**
+ * Menu where the user can send an SMS to selected contacts under a scheduled alarm.
+ * 
+ * @author MrUseL3tter
+ */
 public class ContactsMenu extends Activity {
 
     private List<String> numbers = new ArrayList<String>();
@@ -30,11 +35,10 @@ public class ContactsMenu extends Activity {
     private Button addContacts;
     private Button confirm;
 
+    /** changes '+63' into '0' */
     private String formatPhoneNumber(String number) {
-	System.out.print("Replaced " + number + " with ");
 	if (number.charAt(0) == '+')
 	    number = number.replaceAll("\\+63", "0");
-	//	System.out.println(number);
 	return number;
     }
 
@@ -51,23 +55,12 @@ public class ContactsMenu extends Activity {
 	if (resultCode == RESULT_OK)
 	    switch (requestCode) {
 		case 1:
-		    //		    String text = contactNames.getText().toString();
-		    //		    if (text.length() > 0)
-		    //			text += ", ";
-		    //		    Cursor cursor = getContentResolver().query(Phone.CONTENT_URI, new String[] { Contacts._ID, Contacts.DISPLAY_NAME, Phone.NUMBER }, null, null, null);
-		    //		    cursor.getString(0);
-		    //		    contactNames.setText(cursor.getString(0));
 		    Uri result = data.getData();
-		    //		    System.out.println(result.toString());
-		    String id = result.getLastPathSegment();
-
 		    String[] projection = { ContactsContract.Contacts._ID, ContactsContract.Contacts.DISPLAY_NAME, ContactsContract.Contacts.HAS_PHONE_NUMBER };
 		    String selection = ContactsContract.Contacts.HAS_PHONE_NUMBER + "=1";
-
 		    Cursor cursor = managedQuery(result, projection, selection, null, null);
 		    while (cursor.moveToNext()) {
 			String contactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
-			String name = cursor.getString(cursor.getColumnIndexOrThrow(ContactsContract.Contacts.DISPLAY_NAME));
 
 			Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + contactId, null, null);
 			while (phones.moveToNext()) {
@@ -76,17 +69,12 @@ public class ContactsMenu extends Activity {
 				String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DATA));
 				phoneNumber = phoneNumber.replaceAll("\\s", "");
 				contactNames.setText(contactNames.getText().toString() + phoneNumber + "; ");
-				//				System.out.println(phoneNumber);
 				numbers.add(formatPhoneNumber(phoneNumber));
 				confirm.setEnabled(true);
 				break;
 			    }
 			}
 		    }
-
-		    //		    Cursor cursor = getContentResolver().query(Contacts.CONTENT_URI, null, Contacts._ID, new String[] { id }, null);
-		    //		    for (int i = 0; i < cursor.getColumnCount(); i++)
-		    //			System.out.println(cursor.getColumnNames()[i]);
 		    break;
 	    }
     }

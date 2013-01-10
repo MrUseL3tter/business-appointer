@@ -9,7 +9,6 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
 import android.app.ListActivity;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -18,36 +17,19 @@ import android.os.Bundle;
 import android.provider.CalendarContract;
 import android.provider.CalendarContract.Calendars;
 import android.provider.CalendarContract.Events;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
+/**
+ * Tab menu showing the list of events depending on the selected calendar.
+ * 
+ * @author MrUseL3tter
+ */
 public class EventsMenu extends ListActivity {
-
-    private class EventsAdapter extends ArrayAdapter<String> {
-
-	private Context context;
-	private final String[] values;
-
-	public EventsAdapter(Context context, String[] values) {
-	    super(context, android.R.id.text1);
-	    this.context = context;
-	    this.values = values;
-	}
-
-	@Override
-	public View getView(int position, View convertView, ViewGroup parent) {
-	    LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	    View rowView = inflater.inflate(R.layout.list_layout, parent, false);
-	    return rowView;
-	}
-
-    }
 
     /** the long-pressed event to be deleted */
     private String selectedEventTitle;
@@ -68,20 +50,15 @@ public class EventsMenu extends ListActivity {
 	try {
 	    if (cursor.getCount() > 0)
 		while (cursor.moveToNext()) {
-		    String name = cursor.getString(0);
 		    String displayName = cursor.getString(1);
-		    // This is actually a better pattern:
-		    String color = cursor.getString(cursor.getColumnIndex(CalendarContract.Calendars.CALENDAR_COLOR));
-		    Boolean selected = !cursor.getString(3).equals("0");
 		    calendars.add(displayName);
 		}
 	    cursor.close();
 	} catch (AssertionError ex) {
-	    // TODO: log exception and bail
 	}
 
 	String[] calendarArray = new String[calendars.size()];
-	Iterator iterator = calendars.iterator();
+	Iterator<String> iterator = calendars.iterator();
 
 	int i = 0;
 	while (iterator.hasNext()) {
@@ -102,8 +79,6 @@ public class EventsMenu extends ListActivity {
 
 	    @Override
 	    public void onNothingSelected(AdapterView<?> arg0) {
-		// TODO Auto-generated method stub
-
 	    }
 	});
 	getEventsByCalendar(calendarArray[0]);
@@ -122,43 +97,31 @@ public class EventsMenu extends ListActivity {
 	    eventIDs = new String[cursor.getCount() - 1];
 	    int i = 0;
 	    while (cursor.moveToNext()) {
-		//		System.out.println("Calendar ID: " + cursor.getString(0));
-		//		System.out.println("Title: " + cursor.getString(1));
-		//		System.out.println("Description: " + cursor.getString(2));
-		//		System.out.println("DTStart: " + cursor.getString(3));
-		//		System.out.println("DTEnd: " + cursor.getString(4));
-		//		System.out.println("Event Location: " + cursor.getString(5));
 		eventsList[i] = !cursor.getString(1).equals("") ? cursor.getString(1) : "Untitled Event";
-		//		System.out.println(cursor.getLong(0));
 		eventIDs[i] = cursor.getString(0);
 		i++;
 	    }
 	    cursor.close();
 	    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_layout, R.id.listText);
-	    //	EventsAdapter adapter = new EventsAdapter(getApplicationContext(), sampleValues);
 	    adapter.addAll(eventsList);
 	    setListAdapter(adapter);
 	    getListView().setOnItemLongClickListener(new OnItemLongClickListener() {
 
 		@Override
 		public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-		    //		Toast.makeText(getApplicationContext(), EventsMenu.this.getListAdapter().getItem(position).toString(), Toast.LENGTH_LONG).show();
-		    selectedEventTitle = eventIDs[position];//EventsMenu.this.getListAdapter().getItem(position).toString();
+		    selectedEventTitle = eventIDs[position];
 		    showDialog(Dialogs.CONFIRM_DELETE_EVENT);
 		    return false;
 		}
 
 	    });
-	} else
-	    System.out.println("FUUUUUUUUUUUUUUU");
+	}
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-	// TODO Auto-generated method stub
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.events);
-
 	getCalendarsList();
     }
 
@@ -182,7 +145,6 @@ public class EventsMenu extends ListActivity {
 
 		    @Override
 		    public void onClick(DialogInterface dialog, int which) {
-
 		    }
 		});
 	}
