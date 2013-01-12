@@ -16,9 +16,6 @@ import android.widget.Button;
 import android.widget.CalendarView;
 import android.widget.CalendarView.OnDateChangeListener;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-
 /**
  * Tab menu where the user can add events.
  * 
@@ -37,34 +34,27 @@ public class CalendarMenu extends Activity {
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.calendar);
-	Settings.load();
-	if (GooglePlayServicesUtil.isGooglePlayServicesAvailable(getApplicationContext()) != ConnectionResult.SUCCESS)
-	    showDialog(Dialogs.GPS_NOT_AVAILABLE_PROMPT);
-	else {
-	    calendarView = (CalendarView) findViewById(R.id.calendarView);
-	    addEvent = (Button) findViewById(R.id.addEventButton);
-	    addEvent.setOnClickListener(new View.OnClickListener() {
+	calendarView = (CalendarView) findViewById(R.id.calendarView);
+	addEvent = (Button) findViewById(R.id.addEventButton);
+	addEvent.setOnClickListener(new View.OnClickListener() {
 
-		@Override
-		public void onClick(View v) {
-		    showDialog(Dialogs.ADD_PLACE_MANUALLY_PROMPT);
-		}
-	    });
+	    @Override
+	    public void onClick(View v) {
+		showDialog(Dialogs.ADD_PLACE_MANUALLY_PROMPT);
+	    }
+	});
 
-	    calendarView.setOnDateChangeListener(new OnDateChangeListener() {
+	calendarView.setOnDateChangeListener(new OnDateChangeListener() {
 
-		@Override
-		public void onSelectedDayChange(CalendarView arg0, int year, int month, int date) {
-		    CalendarMenu.this.year = year;
-		    CalendarMenu.this.month = month;
-		    CalendarMenu.this.date = date;
-		    addEvent.setEnabled(true);
-		}
-	    });
+	    @Override
+	    public void onSelectedDayChange(CalendarView arg0, int year, int month, int date) {
+		CalendarMenu.this.year = year;
+		CalendarMenu.this.month = month;
+		CalendarMenu.this.date = date;
+		addEvent.setEnabled(true);
+	    }
+	});
 
-	    if (!Settings.licenseAccepted)
-		showDialog(Dialogs.OPEN_SOURCE_LICENSE_PROMPT);
-	}
     }
 
     @TargetApi(14)
@@ -84,27 +74,6 @@ public class CalendarMenu extends Activity {
 	Builder builder = new AlertDialog.Builder(this);
 	String message = "";
 	switch (id) {
-	    case Dialogs.OPEN_SOURCE_LICENSE_PROMPT:
-		message = GooglePlayServicesUtil.getOpenSourceSoftwareLicenseInfo(getApplicationContext());
-		builder.setMessage(message);
-		builder.setCancelable(false);
-		builder.setTitle("License");
-		builder.setPositiveButton("Accept", new DialogInterface.OnClickListener() {
-
-		    @Override
-		    public void onClick(DialogInterface dialog, int which) {
-			Settings.licenseAccepted = true;
-			Settings.save();
-		    }
-		});
-		builder.setNegativeButton("Decline", new DialogInterface.OnClickListener() {
-
-		    @Override
-		    public void onClick(DialogInterface dialog, int which) {
-			CalendarMenu.this.finish();
-		    }
-		});
-		break;
 	    case Dialogs.ADD_PLACE_MANUALLY_PROMPT:
 		builder.setMessage(R.string.calendar_place_prompt);
 		builder.setCancelable(true);

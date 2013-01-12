@@ -61,7 +61,6 @@ public class ContactsMenu extends Activity {
 		    Cursor cursor = managedQuery(result, projection, selection, null, null);
 		    while (cursor.moveToNext()) {
 			String contactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
-
 			Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + contactId, null, null);
 			while (phones.moveToNext()) {
 			    int phoneType = phones.getInt(phones.getColumnIndex(Phone.TYPE));
