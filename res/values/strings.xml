@@ -5,6 +5,7 @@
     <string name="menu_settings">Settings</string>
     <string name="calendar_button">Add Event</string>
     <string name="title_activity_business_appointer">BusinessAppointer</string>
+    <string name="alert_sms_notification">SMS sent for the event!</string>
     
     <string name="calendar_contact_prompt">Would you like to include contacts in this event?</string>
     <string name="calendar_place_prompt">Would you like to add the event\'s place manually through Google Maps?</string>

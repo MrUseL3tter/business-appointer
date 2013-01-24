@@ -12,6 +12,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -21,6 +22,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.provider.CalendarContract;
 import android.provider.CalendarContract.Events;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -29,7 +31,9 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
+import com.google.android.maps.OverlayItem;
 import com.google.android.maps.Projection;
+import com.noobs2d.businessappointer.overlays.SimpleItemizedOverlay;
 import com.noobs2d.businessappointer.routing.GoogleParser;
 import com.noobs2d.businessappointer.routing.Parser;
 import com.noobs2d.businessappointer.routing.Route;
@@ -53,10 +57,44 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 
 	@Override
 	protected void onPostExecute(Route result) {
+	    mapView.getOverlays().clear();
 	    RouteOverlay routeOverlay = new RouteOverlay(MapV1Menu.this, result, Color.BLUE);
-	    if (mapView.getOverlays().get(mapView.getOverlays().size() - 1) instanceof RouteOverlay)
-		mapView.getOverlays().remove(mapView.getOverlays().size() - 1);
+	    //	    if (mapView.getOverlays().get(mapView.getOverlays().size() - 1) instanceof RouteOverlay)
+	    //		mapView.getOverlays().remove(mapView.getOverlays().size() - 1);
 	    mapView.getOverlays().add(routeOverlay);
+
+	    // add the marker with balloon overlayItem
+	    Drawable marker = getResources().getDrawable(R.drawable.marker_green);
+	    itemizedOverlay = new SimpleItemizedOverlay(marker, mapView);
+
+	    float[] results = new float[3];
+	    int endLatitude = Double.valueOf(result.getPoints().get(result.getPoints().size() - 1).getLatitudeE6()).intValue();
+	    int endLongitude = Double.valueOf(result.getPoints().get(result.getPoints().size() - 1).getLongitudeE6()).intValue();
+
+	    Location.distanceBetween(getLatitude(), getLongtitude(), endLatitude, endLongitude, results);
+
+	    //	    for (int i = 0; i < results.length; i++)
+	    //		System.out.println("i-" + i + ": " + results[i]);
+
+	    double lat1 = currentLocationOverlay.getMyLocation().getLatitudeE6() / 1E6;
+	    double lat2 = result.getPoints().get(result.getPoints().size() - 1).getLatitudeE6() / 1E6;
+	    double lon1 = currentLocationOverlay.getMyLocation().getLongitudeE6() / 1E6;
+	    double lon2 = result.getPoints().get(result.getPoints().size() - 1).getLongitudeE6() / 1E6;
+
+	    double dLat = Math.toRadians(lat2 - lat1);
+	    double dLon = Math.toRadians(lon2 - lon1);
+
+	    double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+
+	    Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+
+	    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+	    double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	    c *= 6378.1;
+	    OverlayItem overlayItem = new OverlayItem(result.getPoints().get(result.getPoints().size() - 1), result.getName(), (int) c + " KM");
+	    itemizedOverlay.addOverlay(overlayItem);
+	    mapView.getOverlays().add(itemizedOverlay);
 
 	    mapView.invalidate();
 	    next.setEnabled(true);
@@ -94,6 +132,9 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
     }
 
     private MapView mapView;
+
+    private SimpleItemizedOverlay itemizedOverlay;
+
     private MyLocationOverlay currentLocationOverlay;
     private Button next;
     private boolean isPotentialLongPress;
@@ -143,8 +184,8 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 
 	    @Override
 	    public void run() {
-		int currentLatitude = Double.valueOf(currentLocationOverlay.getLastFix().getLatitude() * 1E6).intValue();
-		int currentLongitude = Double.valueOf(currentLocationOverlay.getLastFix().getLongitude() * 1E6).intValue();
+		int currentLatitude = getLatitude();
+		int currentLongitude = getLongtitude();
 		mapView.getController().setCenter(new GeoPoint(currentLatitude, currentLongitude));
 		mapView.setSatellite(true);
 	    }
@@ -166,6 +207,20 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 
     @Override
     public void onLocationChanged(Location location) {
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+	if (item.getItemId() == 0) {
+
+	    // example hiding balloon before removing overlay
+	    if (itemizedOverlay.getFocus() != null)
+		itemizedOverlay.hideBalloon();
+	    mapView.getOverlays().remove(itemizedOverlay);
+	    mapView.invalidate();
+
+	}
+	return true;
     }
 
     @Override
@@ -197,10 +252,18 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 	sBuf.append(dest.getLatitudeE6() / 1E6);
 	sBuf.append(',');
 	sBuf.append(dest.getLongitudeE6() / 1E6);
-	sBuf.append("&sensor=true&mode=driving");
+	sBuf.append("&sensor=true&mode=walking");
 	parser = new GoogleParser(sBuf.toString());
 	Route r = parser.parse();
 	return r;
+    }
+
+    private int getLatitude() {
+	return Double.valueOf(currentLocationOverlay.getLastFix().getLatitude() * 1E6).intValue();
+    }
+
+    private int getLongtitude() {
+	return Double.valueOf(currentLocationOverlay.getLastFix().getLongitude() * 1E6).intValue();
     }
 
     private void handleLongPress(final MotionEvent event) {
@@ -243,8 +306,8 @@ public class MapV1Menu extends MapActivity implements LocationListener, RouteOve
 
     private void setDestinationPath(int targetLat, int targetLon) {
 	String[] data = new String[4];
-	int originLat = Double.valueOf(currentLocationOverlay.getLastFix().getLatitude() * 1E6).intValue();
-	int originLon = Double.valueOf(currentLocationOverlay.getLastFix().getLongitude() * 1E6).intValue();
+	int originLat = getLatitude();
+	int originLon = getLongtitude();
 	data[0] = "" + originLat; // start LATITUDE
 	data[1] = "" + originLon; // start LONGITUDE
 	data[2] = "" + targetLat;

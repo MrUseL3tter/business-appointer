@@ -1,8 +1,9 @@
 package com.noobs2d.businessappointer;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
@@ -11,17 +12,14 @@ import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.CalendarContract;
-import android.provider.CalendarContract.Calendars;
 import android.provider.CalendarContract.Events;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 
 /**
@@ -37,74 +35,46 @@ public class EventsMenu extends ListActivity {
     /** for tracking of event IDs on the ListView */
     private String[] eventIDs;
 
-    private void getCalendarsList() {
-	Spinner spinner = (Spinner) findViewById(R.id.calendarsSpinner);
-
-	final String[] fields = { CalendarContract.Calendars.NAME, CalendarContract.Calendars.CALENDAR_DISPLAY_NAME, CalendarContract.Calendars.CALENDAR_COLOR, CalendarContract.Calendars.VISIBLE };
-	final Uri calendarURI = Uri.parse("content://com.android.calendar/calendars");
-
-	// Fetch a list of all calendars sync'd with the device and their display names
-	Cursor cursor = getContentResolver().query(calendarURI, fields, null, null, null);
-
-	Set<String> calendars = new HashSet<String>();
-	try {
-	    if (cursor.getCount() > 0)
-		while (cursor.moveToNext()) {
-		    String displayName = cursor.getString(1);
-		    calendars.add(displayName);
-		}
-	    cursor.close();
-	} catch (AssertionError ex) {
-	}
-
-	String[] calendarArray = new String[calendars.size()];
-	Iterator<String> iterator = calendars.iterator();
-
-	int i = 0;
-	while (iterator.hasNext()) {
-	    calendarArray[i] = iterator.next().toString();
-	    iterator.remove();
-	    i++;
-	}
-
-	ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, calendarArray);
-	dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-	spinner.setAdapter(dataAdapter);
-	spinner.setOnItemSelectedListener(new OnItemSelectedListener() {
-
-	    @Override
-	    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-		getEventsByCalendar((String) parent.getAdapter().getItem(position));
-	    }
-
-	    @Override
-	    public void onNothingSelected(AdapterView<?> arg0) {
-	    }
-	});
-	getEventsByCalendar(calendarArray[0]);
-    }
-
     @TargetApi(14)
-    private void getEventsByCalendar(String calendarDisplayName) {
-	System.out.println("Getting events list for " + calendarDisplayName + "...");
-	String[] projection = { Events._ID, Events.TITLE };
-	String selection = Calendars.CALENDAR_DISPLAY_NAME + " = " + DatabaseUtils.sqlEscapeString(calendarDisplayName);
-	Cursor cursor = getApplicationContext().getContentResolver().query(Events.CONTENT_URI, projection, selection, null, null);
-
-	cursor.moveToFirst();
-	if (cursor.getCount() > 0) {
-	    String[] eventsList = new String[cursor.getCount() - 1];
-	    eventIDs = new String[cursor.getCount() - 1];
+    private void setListViewData(String calendarDisplayName) {
+	Cursor events = CalendarUtils.getEventsByCalendarDisplayName(getApplicationContext(), calendarDisplayName);
+	events.moveToFirst();
+	if (events.getCount() > 0) {
+	    String[] eventTitles = new String[events.getCount() - 1];
+	    String[] eventStartTimes = new String[events.getCount() - 1];
+	    String[] eventEndTimes = new String[events.getCount() - 1];
+	    eventIDs = new String[events.getCount() - 1];
 	    int i = 0;
-	    while (cursor.moveToNext()) {
-		eventsList[i] = !cursor.getString(1).equals("") ? cursor.getString(1) : "Untitled Event";
-		eventIDs[i] = cursor.getString(0);
+	    while (events.moveToNext()) {
+		eventIDs[i] = events.getString(0);
+		eventTitles[i] = !events.getString(1).equals("") ? events.getString(1) : "Untitled Event";
+		eventStartTimes[i] = events.getString(2);
+		eventEndTimes[i] = events.getString(3);
 		i++;
 	    }
-	    cursor.close();
-	    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_layout, R.id.listText);
-	    adapter.addAll(eventsList);
-	    setListAdapter(adapter);
+	    events.close();
+	    ArrayList<Map<String, String>> list = new ArrayList<Map<String, String>>();
+	    for (int j = 0; j < eventStartTimes.length && j < eventEndTimes.length; j++) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(Long.parseLong(eventStartTimes[j]));
+		String schedule = CalendarUtils.getCalendarString(calendar) + " - ";
+		calendar.setTimeInMillis(Long.parseLong(eventStartTimes[j]));
+		schedule += CalendarUtils.getCalendarString(calendar);
+		HashMap<String, String> map = new HashMap<String, String>();
+		map.put(Events.TITLE, eventTitles[j]);
+		map.put("SCHEDULE", schedule);
+		list.add(map);
+	    }
+
+	    String[] from = { Events.TITLE, "SCHEDULE" };
+	    int[] to = { R.id.listText, R.id.listText2 };
+
+	    SimpleAdapter simpleAdapter = new SimpleAdapter(getApplicationContext(), list, R.layout.list_layout, from, to);
+	    setListAdapter(simpleAdapter);
+
+	    //	    ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), R.layout.list_layout, R.id.listText);
+	    //	    adapter.addAll(eventTitles);
+	    //	    setListAdapter(adapter);
 	    getListView().setOnItemLongClickListener(new OnItemLongClickListener() {
 
 		@Override
@@ -118,11 +88,31 @@ public class EventsMenu extends ListActivity {
 	}
     }
 
+    private void setSpinnerData() {
+	Spinner spinner = (Spinner) findViewById(R.id.calendarsSpinner);
+
+	ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, CalendarUtils.getCalendarsList(getContentResolver()));
+	dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+	spinner.setAdapter(dataAdapter);
+	spinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+
+	    @Override
+	    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+		setListViewData((String) parent.getAdapter().getItem(position));
+	    }
+
+	    @Override
+	    public void onNothingSelected(AdapterView<?> arg0) {
+	    }
+	});
+	setListViewData(CalendarUtils.getCalendarsList(getContentResolver())[0]);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.events);
-	getCalendarsList();
+	setSpinnerData();
     }
 
     @Override
@@ -138,7 +128,7 @@ public class EventsMenu extends ListActivity {
 		    @Override
 		    public void onClick(DialogInterface dialog, int which) {
 			CalendarUtils.deleteEvent(getContentResolver(), selectedEventTitle);
-			getCalendarsList();
+			setSpinnerData();
 		    }
 		});
 		builder.setNegativeButton("No", new DialogInterface.OnClickListener() {

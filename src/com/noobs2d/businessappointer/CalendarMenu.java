@@ -61,6 +61,11 @@ public class CalendarMenu extends Activity {
     private void startEventIntent() {
 	Intent intent = new Intent(Intent.ACTION_INSERT);
 	intent.setData(CalendarContract.Events.CONTENT_URI);
+	Bundle bundle = new Bundle();
+	bundle.putInt("YEAR", year);
+	bundle.putInt("MONTH", month);
+	bundle.putInt("DATE", date);
+	intent.putExtras(bundle);
 	startActivityForResult(intent, 1);
     }
 

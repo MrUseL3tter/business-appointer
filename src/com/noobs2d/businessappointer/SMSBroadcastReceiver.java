@@ -19,6 +19,9 @@ public class SMSBroadcastReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 	SmsManager smsManager = SmsManager.getDefault();
 	for (int i = 0; i < intent.getIntExtra("CONTACTS_SIZE", 0); i++)
-	    smsManager.sendTextMessage(intent.getStringExtra("CONTACT_" + i), null, intent.getStringExtra("MESSAGE"), null, null);
+	    smsManager.sendTextMessage(intent.getStringExtra("CONTACT_" + i), null, intent.getStringExtra("MESSAGE") + " ", null, null);
+	Intent activityIntent = new Intent(context, AlertActivity.class);
+	activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+	context.startActivity(activityIntent);
     }
 }
